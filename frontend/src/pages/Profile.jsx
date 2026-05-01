@@ -2,36 +2,24 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import "./Profile.css";
 
+const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const isSubjectTask = (task) => {
+    return !!task?.subjectId || task?.taskType === "lecture-subtask";
+};
+
 function Profile() {
-    // ===== Form state =====
     const [form, setForm] = useState({
         name: "",
         email: "",
         branch: "",
-        semester: "",
-        collegeName: "",
-        enrollmentNumber: "",
-        // Academic
-        lastSemSGPA: 0,
-        MSC1: 0,
-        MSC2: 0,
-        lastYearResult: "",
-        attendance: 0,
-        backlogs: 0,
-        // Career
-        careerGoal: "",
-        technicalSkills: [],
-        softSkills: [],
-        certifications: "",
-        projects: "",
-        linkedin: "",
-        github: "",
-        // Personal
-        achievements: "",
-        hobbies: "",
     });
 
-    // Performance (read-only)
     const [performance, setPerformance] = useState({
         academicProgress: 0,
         skillProgress: 0,
@@ -44,84 +32,144 @@ function Profile() {
     const [successMsg, setSuccessMsg] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
 
-    // Temp inputs for tag-style skill entry
-    const [techInput, setTechInput] = useState("");
-    const [softInput, setSoftInput] = useState("");
-
-    // ===== Fetch student data on mount =====
     useEffect(() => {
         const student = JSON.parse(localStorage.getItem("student"));
-        if (!student) return;
+        if (!student) {
+            setErrorMsg("Failed to load profile data.");
+            setLoading(false);
+            return;
+        }
 
-        API.get(`/students/${student._id}`)
-            .then((res) => {
-                const s = res.data.student;
+        const fetchStudent = API.get(`/students/${student._id}`);
+        const fetchTasks = API.get(`/tasks/${student._id}`).catch(() => ({ data: { tasks: [] } }));
+        const fetchMyDay = API.get(`/myday/${student._id}`).catch(() => ({ data: {} }));
+
+        Promise.all([fetchStudent, fetchTasks, fetchMyDay])
+            .then(([studentRes, tasksRes, myDayRes]) => {
+                const s = studentRes.data.student;
+                const tasks = tasksRes.data.tasks || [];
+                const goalTasks = tasks.filter((task) => !isSubjectTask(task));
+                const myDay = myDayRes.data || {};
+
+                const academicTasks = goalTasks.filter((task) => task.goalId && task.goalId.type === "academic");
+                const completedAcademic = academicTasks.filter((task) => task.isCompleted).length;
+                const academicProgress = academicTasks.length > 0
+                    ? Math.round((completedAcademic / academicTasks.length) * 100)
+                    : 0;
+
+                const skillTasks = goalTasks.filter((task) => task.goalId && task.goalId.type === "skill");
+                const completedSkill = skillTasks.filter((task) => task.isCompleted).length;
+                const skillProgress = skillTasks.length > 0
+                    ? Math.round((completedSkill / skillTasks.length) * 100)
+                    : 0;
+
+                let productivityScore = 0;
+                if (myDay.productivityScore !== undefined) {
+                    productivityScore = myDay.productivityScore;
+                } else if (myDay.categories) {
+                    const productiveNames = [
+                        "study",
+                        "skills",
+                        "college",
+                        "coding",
+                        "code",
+                        "dsa",
+                        "programming",
+                        "project",
+                        "homework",
+                        "assignment",
+                        "lecture",
+                        "class",
+                        "lab",
+                        "reading",
+                        "research",
+                        "practice",
+                        "learn",
+                        "course",
+                        "tutorial",
+                        "exam",
+                        "test",
+                        "revision",
+                        "competitive",
+                        "development",
+                        "dev",
+                        "internship",
+                        "work",
+                        "training",
+                        "workshop",
+                        "seminar",
+                    ];
+                    const productive = myDay.categories
+                        .filter((category) => productiveNames.some((name) => (category.name || "").toLowerCase().includes(name)))
+                        .reduce((sum, category) => sum + (Number(category.hours) || 0), 0);
+                    const total = myDay.totalHours || 0;
+                    productivityScore = total > 0 ? Math.round((productive / total) * 100) : 0;
+                }
+
+                const completedDates = [...new Set(
+                    tasks
+                        .filter((task) => task.isCompleted && task.date)
+                        .map((task) => task.date.split("T")[0])
+                )].sort().reverse();
+
+                let taskStreak = 0;
+                const todayStr = getLocalDateString();
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = getLocalDateString(yesterday);
+
+                if (completedDates.length > 0) {
+                    let expectedDate = new Date();
+                    if (completedDates[0] === todayStr) {
+                        taskStreak = 1;
+                    } else if (completedDates[0] === yesterdayStr) {
+                        taskStreak = 1;
+                        expectedDate = yesterday;
+                    }
+
+                    if (taskStreak > 0) {
+                        for (let i = 1; i < completedDates.length; i++) {
+                            expectedDate.setDate(expectedDate.getDate() - 1);
+                            if (completedDates[i] === getLocalDateString(expectedDate)) {
+                                taskStreak++;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 setForm({
                     name: s.name || "",
                     email: s.email || "",
                     branch: s.branch || "",
-                    semester: s.semester || "",
-                    collegeName: s.collegeName || "",
-                    enrollmentNumber: s.enrollmentNumber || "",
-                    lastSemSGPA: s.lastSemSGPA || 0,
-                    MSC1: s.MSC1 || 0,
-                    MSC2: s.MSC2 || 0,
-                    lastYearResult: s.lastYearResult || "",
-                    attendance: s.attendance || 0,
-                    backlogs: s.backlogs || 0,
-                    careerGoal: s.careerGoal || "",
-                    technicalSkills: s.technicalSkills || [],
-                    softSkills: s.softSkills || [],
-                    certifications: s.certifications || "",
-                    projects: s.projects || "",
-                    linkedin: s.linkedin || "",
-                    github: s.github || "",
-                    achievements: s.achievements || "",
-                    hobbies: s.hobbies || "",
                 });
+
                 setPerformance({
-                    academicProgress: s.academicProgress || 0,
-                    skillProgress: s.skillProgress || 0,
-                    productivityScore: s.productivityScore || 0,
-                    taskStreak: s.taskStreak || 0,
+                    academicProgress,
+                    skillProgress,
+                    productivityScore,
+                    taskStreak,
                 });
+
                 setLoading(false);
             })
             .catch((err) => {
-                console.error("Error fetching profile:", err);
+                console.error("Error fetching profile data:", err);
                 setErrorMsg("Failed to load profile data.");
                 setLoading(false);
             });
     }, []);
 
-    // ===== Generic input handler =====
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    // ===== Skill tag helpers =====
-    const addSkill = (field, inputValue, setInputValue) => {
-        const trimmed = inputValue.trim();
-        if (!trimmed) return;
-        if (form[field].includes(trimmed)) return; // no duplicates
-        setForm((prev) => ({ ...prev, [field]: [...prev[field], trimmed] }));
-        setInputValue("");
-    };
-
-    const removeSkill = (field, index) => {
-        setForm((prev) => ({
-            ...prev,
-            [field]: prev[field].filter((_, i) => i !== index),
-        }));
-    };
-
-    // ===== Save profile =====
     const handleSave = async () => {
         const student = JSON.parse(localStorage.getItem("student"));
         if (!student) return;
 
-        // --- Client-side validation ---
         const trimmedName = (form.name || "").trim();
         if (!trimmedName) {
             setErrorMsg("Name is required.");
@@ -141,17 +189,13 @@ function Profile() {
         setErrorMsg("");
 
         try {
-            // Exclude email from update (it's read-only & has unique constraint)
-            const { email, ...updateData } = form;
-            updateData.name = trimmedName; // use the trimmed name
-            const res = await API.put(`/students/${student._id}`, updateData);
+            const res = await API.put(`/students/${student._id}`, {
+                name: trimmedName,
+                branch: form.branch,
+            });
+
             setSuccessMsg("Profile updated successfully!");
-
-            // Update localStorage with latest student data
-            const updated = res.data.student;
-            localStorage.setItem("student", JSON.stringify(updated));
-
-            // Auto-hide success message
+            localStorage.setItem("student", JSON.stringify(res.data.student));
             setTimeout(() => setSuccessMsg(""), 3000);
         } catch (err) {
             console.error("Error saving profile:", err?.response?.data || err);
@@ -163,7 +207,6 @@ function Profile() {
         }
     };
 
-    // ===== Loading =====
     if (loading) return <h3 className="profile-loading">Loading profile...</h3>;
 
     return (
@@ -173,9 +216,8 @@ function Profile() {
             {successMsg && <div className="profile-success">{successMsg}</div>}
             {errorMsg && <div className="profile-error">{errorMsg}</div>}
 
-            {/* ========== 1. Basic Info ========== */}
             <div className="profile-section">
-                <h3>👤 Basic Information</h3>
+                <h3>Basic Information</h3>
                 <div className="profile-form-grid">
                     <div className="profile-field">
                         <label>Name</label>
@@ -189,236 +231,11 @@ function Profile() {
                         <label>Branch</label>
                         <input name="branch" value={form.branch} onChange={handleChange} />
                     </div>
-                    <div className="profile-field">
-                        <label>Semester</label>
-                        <input
-                            name="semester"
-                            value={form.semester}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>College Name</label>
-                        <input
-                            name="collegeName"
-                            value={form.collegeName}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>Enrollment Number</label>
-                        <input
-                            name="enrollmentNumber"
-                            value={form.enrollmentNumber}
-                            onChange={handleChange}
-                        />
-                    </div>
                 </div>
             </div>
 
-            {/* ========== 2. Academic Info ========== */}
             <div className="profile-section">
-                <h3>📚 Academic Information</h3>
-                <div className="profile-form-grid">
-                    <div className="profile-field">
-                        <label>Last Sem SGPA</label>
-                        <input
-                            name="lastSemSGPA"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="10"
-                            value={form.lastSemSGPA}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>MSC 1</label>
-                        <input
-                            name="MSC1"
-                            type="number"
-                            step="0.01"
-                            value={form.MSC1}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>MSC 2</label>
-                        <input
-                            name="MSC2"
-                            type="number"
-                            step="0.01"
-                            value={form.MSC2}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>Last Year Result</label>
-                        <input
-                            name="lastYearResult"
-                            value={form.lastYearResult}
-                            onChange={handleChange}
-                            placeholder="e.g. Pass / Fail / First Class"
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>Attendance (%)</label>
-                        <input
-                            name="attendance"
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={form.attendance}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>Backlogs</label>
-                        <input
-                            name="backlogs"
-                            type="number"
-                            min="0"
-                            value={form.backlogs}
-                            onChange={handleChange}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* ========== 3. Skills & Career ========== */}
-            <div className="profile-section">
-                <h3>🚀 Skills & Career</h3>
-                <div className="profile-form-grid">
-                    <div className="profile-field" style={{ gridColumn: "1 / -1" }}>
-                        <label>Career Goal</label>
-                        <input
-                            name="careerGoal"
-                            value={form.careerGoal}
-                            onChange={handleChange}
-                            placeholder="e.g. Full-Stack Developer, Data Scientist"
-                        />
-                    </div>
-                </div>
-
-                {/* Technical Skills (tags) */}
-                <div className="profile-field" style={{ marginTop: "1rem" }}>
-                    <label>Technical Skills</label>
-                    <div className="skills-input-row">
-                        <input
-                            value={techInput}
-                            onChange={(e) => setTechInput(e.target.value)}
-                            placeholder="Type a skill & press Add"
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    addSkill("technicalSkills", techInput, setTechInput);
-                                }
-                            }}
-                        />
-                        <button
-                            type="button"
-                            onClick={() =>
-                                addSkill("technicalSkills", techInput, setTechInput)
-                            }
-                        >
-                            Add
-                        </button>
-                    </div>
-                    <div className="skills-tags">
-                        {form.technicalSkills.map((skill, i) => (
-                            <span key={i} className="skill-tag">
-                                {skill}
-                                <button
-                                    type="button"
-                                    onClick={() => removeSkill("technicalSkills", i)}
-                                >
-                                    ×
-                                </button>
-                            </span>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Soft Skills (tags) */}
-                <div className="profile-field" style={{ marginTop: "1rem" }}>
-                    <label>Soft Skills</label>
-                    <div className="skills-input-row">
-                        <input
-                            value={softInput}
-                            onChange={(e) => setSoftInput(e.target.value)}
-                            placeholder="Type a skill & press Add"
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    addSkill("softSkills", softInput, setSoftInput);
-                                }
-                            }}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => addSkill("softSkills", softInput, setSoftInput)}
-                        >
-                            Add
-                        </button>
-                    </div>
-                    <div className="skills-tags">
-                        {form.softSkills.map((skill, i) => (
-                            <span key={i} className="skill-tag">
-                                {skill}
-                                <button
-                                    type="button"
-                                    onClick={() => removeSkill("softSkills", i)}
-                                >
-                                    ×
-                                </button>
-                            </span>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="profile-form-grid" style={{ marginTop: "1rem" }}>
-                    <div className="profile-field">
-                        <label>Certifications</label>
-                        <textarea
-                            name="certifications"
-                            value={form.certifications}
-                            onChange={handleChange}
-                            placeholder="List your certifications..."
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>Projects</label>
-                        <textarea
-                            name="projects"
-                            value={form.projects}
-                            onChange={handleChange}
-                            placeholder="Describe your projects..."
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>LinkedIn URL</label>
-                        <input
-                            name="linkedin"
-                            value={form.linkedin}
-                            onChange={handleChange}
-                            placeholder="https://linkedin.com/in/..."
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>GitHub URL</label>
-                        <input
-                            name="github"
-                            value={form.github}
-                            onChange={handleChange}
-                            placeholder="https://github.com/..."
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* ========== 4. Performance Metrics (Read Only) ========== */}
-            <div className="profile-section">
-                <h3>📊 Performance Metrics</h3>
+                <h3>Performance Metrics</h3>
                 <div className="perf-grid">
                     <div className="perf-card">
                         <p className="perf-value purple">{performance.academicProgress}%</p>
@@ -439,32 +256,6 @@ function Profile() {
                 </div>
             </div>
 
-            {/* ========== 5. Achievements & Hobbies ========== */}
-            <div className="profile-section">
-                <h3>🏆 Achievements & Hobbies</h3>
-                <div className="profile-form-grid">
-                    <div className="profile-field">
-                        <label>Achievements</label>
-                        <textarea
-                            name="achievements"
-                            value={form.achievements}
-                            onChange={handleChange}
-                            placeholder="Your accomplishments..."
-                        />
-                    </div>
-                    <div className="profile-field">
-                        <label>Hobbies</label>
-                        <textarea
-                            name="hobbies"
-                            value={form.hobbies}
-                            onChange={handleChange}
-                            placeholder="What do you enjoy doing..."
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* ========== Save Button ========== */}
             <div className="profile-save-row">
                 <button
                     className="profile-save-btn"

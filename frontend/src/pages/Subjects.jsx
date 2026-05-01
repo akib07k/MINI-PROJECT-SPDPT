@@ -142,12 +142,11 @@ function TimetableManager({ subjects, studentId, onSubjectAdded }) {
     const [timetable, setTimetable] = useState(null);
     const [selectedSubjectId, setSelectedSubjectId] = useState("");
     const [newSubjectName, setNewSubjectName] = useState("");
-    const [loadingTimetable, setLoadingTimetable] = useState(false);
+    const [loadingTimetable, setLoadingTimetable] = useState(true);
 
     // Fetch timetable when day changes
     useEffect(() => {
         if (!selectedDay) return;
-        setLoadingTimetable(true);
         API.get(`/timetable/${studentId}/${selectedDay}`)
             .then(res => {
                 setTimetable(res.data.timetable);
@@ -226,7 +225,10 @@ function TimetableManager({ subjects, studentId, onSubjectAdded }) {
             <div className="timetable-controls">
                 <select
                     value={selectedDay}
-                    onChange={(e) => setSelectedDay(e.target.value)}
+                    onChange={(e) => {
+                        setLoadingTimetable(true);
+                        setSelectedDay(e.target.value);
+                    }}
                     className="day-selector"
                 >
                     {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(d => (

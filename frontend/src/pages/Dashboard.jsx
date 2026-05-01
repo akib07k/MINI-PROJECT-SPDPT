@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import API from "../services/api";
 import "./Dashboard.css";
 import MyDay from "../components/MyDay";
@@ -7,8 +7,18 @@ import TaskReminder from "../components/TaskReminder";
 import GreetingBanner from "../components/GreetingBanner";
 import UncompletedTasks from "../components/UncompletedTasks";
 import CompletedTasks from "../components/CompletedTasks";
+import UncompletedSubTasks from "../components/UncompletedSubTasks";
+import CompletedSubTasks from "../components/CompletedSubTasks";
+import SubjectProgressCards from "../components/SubjectProgressCards";
+import GoalTaskStats from "../components/GoalTaskStats";
 import useTaskReminder from "../hooks/useTaskReminder";
 
+const getLocalDateString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 function Dashboard() {
   const [data, setData] = useState(null);
@@ -19,46 +29,156 @@ function Dashboard() {
   // Schedule morning push notification via Service Worker
   useTaskReminder(studentName);
 
-  // Progress states (derived from tasks)
-  const [academicProgress, setAcademicProgress] = useState(0);
-  const [skillProgress, setSkillProgress] = useState(0);
-  const [shortTermProgress, setShortTermProgress] = useState(0);
-  const [midTermProgress, setMidTermProgress] = useState(0);
-  const [longTermProgress, setLongTermProgress] = useState(0);
-
   // Task Categories
   const [pendingTasks, setPendingTasks] = useState([]); // Today's pending
   const [backlogTasks, setBacklogTasks] = useState([]); // Past uncompleted
   const [completedHistory, setCompletedHistory] = useState([]); // Past completed
 
-  // Track tasks by goal type for modal display
-  const [shortTermTasks, setShortTermTasks] = useState([]);
-  const [midTermTasks, setMidTermTasks] = useState([]);
-  const [longTermTasks, setLongTermTasks] = useState([]);
   const [selectedGoalType, setSelectedGoalType] = useState(null);
 
-  // Goal names
-  const [shortTermGoalName, setShortTermGoalName] = useState("Short-Term Goals");
-  const [midTermGoalName, setMidTermGoalName] = useState("Mid-Term Goals");
-  const [longTermGoalName, setLongTermGoalName] = useState("Long-Term Goals");
+  // All goals with dynamic progress
+  const [allGoals, setAllGoals] = useState([]); // [{ goal, progress, tasks }]
 
   const [showHistory, setShowHistory] = useState(false);
 
-  // Simple state: which subjects are done today { subjectId: taskId }
-  const [doneSubjects, setDoneSubjects] = useState({});
+  // Today's lecture sub-tasks grouped by subjectId
+  const [lectureTasks, setLectureTasks] = useState({});
+  const [activeSubtaskSubject, setActiveSubtaskSubject] = useState(null);
+  const [expandedLectureSubjects, setExpandedLectureSubjects] = useState({});
+  const [newSubtaskTitles, setNewSubtaskTitles] = useState({});
   const [weeklyRefreshKey, setWeeklyRefreshKey] = useState(0);
 
   // Today as YYYY-MM-DD
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
 
-  // ---- markSubjectDone: the ONLY checkbox handler ----
-  const markSubjectDone = async (subjectId, subjectName) => {
+  const getTaskSubjectId = (task) => {
+    if (!task || !task.subjectId) return null;
+    return typeof task.subjectId === "object" ? task.subjectId._id : task.subjectId;
+  };
+
+  const isSubjectTask = (task) => {
+    return !!getTaskSubjectId(task) || task?.taskType === "lecture-subtask";
+  };
+
+  const buildLectureTaskMap = (tasks, subjects = []) => {
+    const nextLectureTasks = {};
+    subjects.forEach(sub => {
+      if (sub?._id) nextLectureTasks[sub._id] = [];
+    });
+
+    tasks.forEach(task => {
+      const subjectId = getTaskSubjectId(task);
+      if (
+        task.taskType !== "lecture-subtask" ||
+        !subjectId ||
+        !nextLectureTasks[subjectId] ||
+        !isTodayDate(task.date)
+      ) {
+        return;
+      }
+      nextLectureTasks[subjectId].push(task);
+    });
+
+    Object.keys(nextLectureTasks).forEach(subjectId => {
+      nextLectureTasks[subjectId].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    });
+
+    return nextLectureTasks;
+  };
+
+  const handleNewSubtaskTitleChange = (subjectId, value) => {
+    setNewSubtaskTitles(prev => ({ ...prev, [subjectId]: value }));
+  };
+
+  const toggleLectureDropdown = (subjectId) => {
+    setExpandedLectureSubjects(prev => ({
+      ...prev,
+      [subjectId]: !prev[subjectId]
+    }));
+  };
+
+  const handleSubtaskKeyDown = (event, subject) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addLectureSubtask(subject);
+    }
+
+    if (event.key === "Escape") {
+      setActiveSubtaskSubject(null);
+    }
+  };
+
+  const addLectureSubtask = async (subject) => {
     const student = JSON.parse(localStorage.getItem("student"));
-    if (!student) return;
+    if (!student || !subject?._id) return;
+
+    const title = (newSubtaskTitles[subject._id] || "").trim();
+    if (!title) {
+      setActiveSubtaskSubject(subject._id);
+      return;
+    }
+
+    if (/^\d+$/.test(title)) {
+      alert("Sub-task title cannot be only numbers.");
+      return;
+    }
+
+    if (title.length < 3) {
+      alert("Sub-task title must be at least 3 characters.");
+      return;
+    }
 
     try {
-      if (doneSubjects[subjectId]) {
+      const res = await API.post("/tasks", {
+        studentId: student._id,
+        taskTitle: title,
+        subjectId: subject._id,
+        goalId: null,
+        taskType: "lecture-subtask",
+        isCompleted: false,
+        date: today,
+        deadline: today
+      });
+
+      setLectureTasks(prev => ({
+        ...prev,
+        [subject._id]: [...(prev[subject._id] || []), res.data.task]
+      }));
+      setExpandedLectureSubjects(prev => ({ ...prev, [subject._id]: true }));
+      setNewSubtaskTitles(prev => ({ ...prev, [subject._id]: "" }));
+      setActiveSubtaskSubject(null);
+      refreshDashboard(student._id);
+    } catch (err) {
+      console.error("Error adding sub-task:", err);
+      alert(err.response?.data?.error || "Failed to add sub-task");
+    }
+  };
+
+  const toggleLectureSubtask = async (task) => {
+    const student = JSON.parse(localStorage.getItem("student"));
+    if (!student || !task?._id) return;
+
+    const subjectId = getTaskSubjectId(task);
+    try {
+      const res = await API.put(`/tasks/${task._id}`, {
+        isCompleted: !task.isCompleted
+      });
+
+      setLectureTasks(prev => ({
+        ...prev,
+        [subjectId]: (prev[subjectId] || []).map(item =>
+          item._id === task._id ? { ...res.data.task, goalId: item.goalId } : item
+        )
+      }));
+      refreshDashboard(student._id);
+    } catch (err) {
+      console.error("Error updating sub-task:", err);
+      alert(err.response?.data?.error || "Failed to update sub-task");
+    }
+  };
+
         // Task EXISTS → toggle OFF (uncheck)
+        /*
         await API.put(`/tasks/${doneSubjects[subjectId]}`, { isCompleted: false });
         setDoneSubjects(prev => {
           const copy = { ...prev };
@@ -106,6 +226,8 @@ function Dashboard() {
     }
   };
 
+  */
+
   // Helper to check if a date string is strictly before today (YYYY-MM-DD comparison)
   const isPastDate = (dateStr) => {
     if (!dateStr) return false;
@@ -121,56 +243,57 @@ function Dashboard() {
   };
 
   // ---- Refresh stats + progress bars ----
-  const refreshDashboard = (studentId) => {
+  const refreshDashboard = (studentId, subjectsOverride = null) => {
     API.get(`/dashboard/${studentId}`)
       .then(res => setData(res.data))
       .catch(err => console.log(err));
 
     API.get(`/tasks/${studentId}`)
-      .then(res => {
+      .then(async res => {
         const allTasks = res.data.tasks || [];
 
-        const academicTasks = allTasks.filter(t => t.goalId && t.goalId.type === "academic");
-        const completedAcademic = academicTasks.filter(t => t.isCompleted).length;
-        const acProg = academicTasks.length > 0 ? Math.round((completedAcademic / academicTasks.length) * 100) : 0;
+        const subjectsForLectureTasks = subjectsOverride || timetable?.subjects || [];
+        setLectureTasks(buildLectureTaskMap(allTasks, subjectsForLectureTasks));
 
-        const skillTasks = allTasks.filter(t => t.goalId && t.goalId.type === "skill");
-        const completedSkill = skillTasks.filter(t => t.isCompleted).length;
-        const skProg = skillTasks.length > 0 ? Math.round((completedSkill / skillTasks.length) * 100) : 0;
-
-        // Short-term progress
-        const shortTasks = allTasks.filter(t => t.goalId && t.goalId.type === "shortterm");
-        const completedShort = shortTasks.filter(t => t.isCompleted).length;
-        const shortProg = shortTasks.length > 0 ? Math.round((completedShort / shortTasks.length) * 100) : 0;
-
-        // Mid-term progress
-        const midTasks = allTasks.filter(t => t.goalId && t.goalId.type === "midterm");
-        const completedMid = midTasks.filter(t => t.isCompleted).length;
-        const midProg = midTasks.length > 0 ? Math.round((completedMid / midTasks.length) * 100) : 0;
-
-        // Long-term progress
-        const longTasks = allTasks.filter(t => t.goalId && t.goalId.type === "longterm");
-        const completedLong = longTasks.filter(t => t.isCompleted).length;
-        const longProg = longTasks.length > 0 ? Math.round((completedLong / longTasks.length) * 100) : 0;
-
-        setAcademicProgress(acProg);
-        setSkillProgress(skProg);
-        setShortTermProgress(shortProg);
-        setMidTermProgress(midProg);
-        setLongTermProgress(longProg);
-
-        setShortTermTasks(shortTasks);
-        setMidTermTasks(midTasks);
-        setLongTermTasks(longTasks);
+        // Build per-goal progress from ALL goals
+        try {
+          const student = JSON.parse(localStorage.getItem("student"));
+          if (student) {
+            const goalsRes = await API.get(`/goals/${student._id}`);
+            const fetchedGoals = goalsRes.data.goals || [];
+            const goalsWithProgress = fetchedGoals.map(goal => {
+              const goalTasks = allTasks.filter(t =>
+                !isSubjectTask(t) &&
+                t.goalId &&
+                (t.goalId._id === goal._id || t.goalId === goal._id)
+              );
+              const done = goalTasks.filter(t => t.isCompleted).length;
+              const progress = goalTasks.length > 0 ? Math.round((done / goalTasks.length) * 100) : 0;
+              return { goal, tasks: goalTasks, progress };
+            });
+            setAllGoals(goalsWithProgress);
+          }
+        } catch (e) {
+          console.log("Goals refresh error:", e);
+        }
 
         // Filter Tasks into Logic Buckets
         // 1. Today's Pending: Not completed AND (date is Today OR no date i.e. general tasks)
         // Note: General tasks without date are usually treated as "do it anytime", so maybe include them here or separate?
         // Assuming "Today" focus:
-        const todaysPending = allTasks.filter(t => !t.isCompleted && (!t.date || isTodayDate(t.date)));
+        const todaysPending = allTasks.filter(t =>
+          !t.isCompleted &&
+          !isSubjectTask(t) &&
+          (!t.date || isTodayDate(t.date))
+        );
 
         // 2. Backlog: Not completed AND date is Past
-        const backlog = allTasks.filter(t => !t.isCompleted && t.date && isPastDate(t.date));
+        const backlog = allTasks.filter(t =>
+          !t.isCompleted &&
+          !isSubjectTask(t) &&
+          t.date &&
+          isPastDate(t.date)
+        );
 
         // 3. Completed History: Completed AND date is Past (or generally completed)
         // User asked for "Completed tasks component", let's put ALL completed tasks there for history reference?
@@ -181,7 +304,12 @@ function Dashboard() {
         // This suggests Today's items should stay on dashboard.
         // So Today's Completed -> stay on timetable view.
         // Past Completed -> move to History component.
-        const pastCompleted = allTasks.filter(t => t.isCompleted && t.date && isPastDate(t.date));
+        const pastCompleted = allTasks.filter(t =>
+          t.isCompleted &&
+          !isSubjectTask(t) &&
+          t.date &&
+          isPastDate(t.date)
+        );
 
         setPendingTasks(todaysPending);
         setBacklogTasks(backlog);
@@ -204,68 +332,20 @@ function Dashboard() {
       setCurrentDay(dayName);
 
       try {
-        // 1. Fetch Goals (to identify Academic Goal)
-        const goalsRes = await API.get(`/goals/${student._id}`);
-        if (isCancelled) return; // Prevent strict mode race condition hook
+        if (isCancelled) return;
 
-        const goals = goalsRes.data.goals || [];
-
-        // Set Goal Names
-        const shortTermGoal = goals.find(g => g.type === "shortterm");
-        const midTermGoal = goals.find(g => g.type === "midterm");
-        const longTermGoal = goals.find(g => g.type === "longterm");
-
-        if (shortTermGoal) setShortTermGoalName(shortTermGoal.title);
-        if (midTermGoal) setMidTermGoalName(midTermGoal.title);
-        if (longTermGoal) setLongTermGoalName(longTermGoal.title);
-
-        const academicGoal = goals.find(g => g.type === "academic");
-
-        // 2. Fetch Timetable & Sync Tasks
+        // Fetch today's timetable. Lecture sub-tasks are loaded from the task list below.
         let subjects = [];
         try {
           const ttRes = await API.get(`/timetable/${student._id}/${dayName}`);
           setTimetable(ttRes.data.timetable);
           subjects = ttRes.data.timetable?.subjects || [];
-        } catch (e) {
+        } catch {
           console.log("No timetable found for today");
           setTimetable(null);
         }
 
-        // Sync: Check tasks for each subject, create if missing
-        const done = {};
-        for (const sub of subjects) {
-          if (!sub || !sub._id) continue;
-
-          try {
-            const checkRes = await API.get(`/tasks/check/${student._id}/${sub._id}/${today}`);
-
-            if (checkRes.data.exists) {
-              // Valid existing task
-              if (checkRes.data.task.isCompleted) {
-                done[sub._id] = checkRes.data.task._id;
-              }
-            } else {
-              // Task MISSING -> Auto-create as Pending
-              console.log(`Auto-creating task for ${sub.subjectName}`);
-              await API.post("/tasks", {
-                studentId: student._id,
-                taskTitle: `${sub.subjectName} Daily Study`,
-                subjectId: sub._id,
-                goalId: academicGoal ? academicGoal._id : null,
-                isCompleted: false,
-                date: today,
-                deadline: today // Set deadline to today for daily tasks
-              });
-            }
-          } catch (err) {
-            console.error("Sync error for subject:", sub.subjectName, err);
-          }
-        }
-        setDoneSubjects(done);
-
-        // 3. Final Refresh of Stats & Tasks (will include newly created tasks)
-        refreshDashboard(student._id);
+        refreshDashboard(student._id, subjects);
 
       } catch (err) {
         console.error("Dashboard sync error:", err);
@@ -277,6 +357,8 @@ function Dashboard() {
     return () => {
       isCancelled = true;
     };
+    // Run once on mount; refreshDashboard reads the latest fetched subjects passed above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -297,8 +379,8 @@ function Dashboard() {
       const reg = await navigator.serviceWorker.ready;
       reg.showNotification(`🌅 Good Morning, ${studentName}!`, {
         body:
-          pendingTasks.length > 0 || backlogTasks.length > 0
-            ? `You have ${pendingTasks.length} task(s) for today and ${backlogTasks.length} backlog item(s). Let's get started! 💪`
+          todayActionCount > 0 || backlogTasks.length > 0
+            ? `You have ${todayActionCount} task(s) for today and ${backlogTasks.length} backlog item(s). Let's get started! 💪`
             : "You're all caught up! Have a productive day 🎉",
         icon: '/vite.svg',
         badge: '/vite.svg',
@@ -313,8 +395,8 @@ function Dashboard() {
       // Fallback: plain Notification API
       new Notification(`🌅 Good Morning, ${studentName}!`, {
         body:
-          pendingTasks.length > 0 || backlogTasks.length > 0
-            ? `You have ${pendingTasks.length} task(s) for today and ${backlogTasks.length} backlog item(s). Let's get started! 💪`
+          todayActionCount > 0 || backlogTasks.length > 0
+            ? `You have ${todayActionCount} task(s) for today and ${backlogTasks.length} backlog item(s). Let's get started! 💪`
             : "You're all caught up! Have a productive day 🎉",
         icon: '/vite.svg'
       });
@@ -322,6 +404,34 @@ function Dashboard() {
   };
 
   if (!data) return <h3 className="loading-text">Loading dashboard...</h3>;
+
+  const todaysLectureSubjects = timetable?.subjects || [];
+  const getLectureTasks = (subjectId) => lectureTasks[subjectId] || [];
+  const subjectSubTasks = todaysLectureSubjects.flatMap(sub =>
+    getLectureTasks(sub._id).map(task => ({
+      ...task,
+      subjectName: sub.subjectName,
+      semester: sub.semester
+    }))
+  );
+  const subjectProgressItems = todaysLectureSubjects.map(sub => {
+    const tasks = getLectureTasks(sub._id);
+    const completed = tasks.filter(task => task.isCompleted).length;
+    const total = tasks.length;
+    const pending = total - completed;
+
+    return {
+      id: sub._id,
+      name: sub.subjectName,
+      total,
+      completed,
+      pending,
+      progress: total > 0 ? Math.round((completed / total) * 100) : 0
+    };
+  });
+  const pendingSubjectSubTasks = subjectSubTasks.filter(task => !task.isCompleted);
+  const completedSubjectSubTasks = subjectSubTasks.filter(task => task.isCompleted);
+  const todayActionCount = pendingTasks.length + pendingSubjectSubTasks.length;
 
   return (
     <div className="dashboard-page">
@@ -355,178 +465,99 @@ function Dashboard() {
       {/* ===== Morning Smart Reminder Banner ===== */}
       <TaskReminder
         studentName={studentName}
-        pendingCount={pendingTasks.length}
+        pendingCount={todayActionCount}
         backlogCount={backlogTasks.length}
       />
 
-      <GreetingBanner studentName={studentName} taskCount={pendingTasks.length} />
+      <GreetingBanner studentName={studentName} taskCount={todayActionCount} />
 
-      {/* ===== Stat Cards ===== */}
-      <div className="dashboard-stats">
-        <div className="stat-card">
-          <p className="stat-label">Total Subjects</p>
-          <p className="stat-value">{data.totalSubjects}</p>
-        </div>
+      <GoalTaskStats
+        goals={allGoals}
+        totalSubjects={data.totalSubjects}
+        totalGoals={data.totalGoals}
+      />
 
-        <div className="stat-card">
-          <p className="stat-label">Total Goals</p>
-          <p className="stat-value">{data.totalGoals}</p>
-        </div>
-        <div className="stat-card">
-          <p className="stat-label">Total Tasks</p>
-          <p className="stat-value">{data.totalTasks}</p>
-        </div>
-        <div className="stat-card">
-          <p className="stat-label">Completed Tasks</p>
-          <p className="stat-value">{data.completedTasks}</p>
-        </div>
-      </div>
+      <SubjectProgressCards subjects={subjectProgressItems} />
 
-      {/* ===== Progress Section ===== */}
+      {/* ===== Goals Progress Section ===== */}
       <div className="progress-grid">
-        {/* Academic Progress */}
-        <div className="progress-card">
-          <h3>📚 Academic Progress</h3>
-          <div className="progress-bar-track">
-            <div
-              className="progress-bar-fill academic-fill"
-              style={{ width: `${academicProgress}%` }}
-            ></div>
+        {/* Dynamic Goal Progress Cards — only show goals that have at least one task */}
+        {allGoals.filter(({ tasks }) => tasks.length > 0).length === 0 ? (
+          <div className="progress-card" style={{ gridColumn: "span 2" }}>
+            <p style={{ color: "#94a3b8", textAlign: "center", margin: 0 }}>
+              No goal tasks yet. <a href="/goals" style={{ color: "#818cf8" }}>Add tasks to your goals →</a>
+            </p>
           </div>
-          <p className="progress-percent academic-color">{academicProgress}%</p>
-        </div>
+        ) : (
+          allGoals.filter(({ tasks }) => tasks.length > 0).map(({ goal, tasks, progress }) => {
+            const typeConfig = {
+              academic:  { icon: "🎓", fillClass: "academic-fill",  colorClass: "academic-color"  },
+              skill:     { icon: "🛠️", fillClass: "skill-fill",     colorClass: "skill-color"     },
+              shortterm: { icon: "🎯", fillClass: "shortterm-fill", colorClass: "shortterm-color" },
+              midterm:   { icon: "📈", fillClass: "midterm-fill",   colorClass: "midterm-color"   },
+              longterm:  { icon: "🚀", fillClass: "longterm-fill",  colorClass: "longterm-color"  },
+              exam:      { icon: "📝", fillClass: "academic-fill",  colorClass: "academic-color"  },
+            };
+            const cfg = typeConfig[goal.type] || { icon: "🏁", fillClass: "shortterm-fill", colorClass: "shortterm-color" };
+            const isOpen = selectedGoalType === goal._id;
 
-        {/* Skill Progress */}
-        <div className="progress-card">
-          <h3>🛠️ Skill Progress</h3>
-          <div className="progress-bar-track">
-            <div
-              className="progress-bar-fill skill-fill"
-              style={{ width: `${skillProgress}%` }}
-            ></div>
-          </div>
-          <p className="progress-percent skill-color">{skillProgress}%</p>
-        </div>
+            return (
+              <div className="progress-card" key={goal._id}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                  <h3 style={{ margin: 0, fontSize: "0.95rem" }}>
+                    {cfg.icon} {goal.title}
+                  </h3>
+                  <span style={{
+                    fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase",
+                    padding: "2px 8px", borderRadius: "999px", background: "rgba(129,140,248,0.15)",
+                    color: "#818cf8", letterSpacing: "0.05em"
+                  }}>
+                    {goal.type}
+                  </span>
+                </div>
 
-        {/* Short-Term Progress */}
-        <div className="progress-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <h3>🎯 {shortTermGoalName}</h3>
-            <button
-              className="view-tasks-btn"
-              onClick={() => setSelectedGoalType(selectedGoalType === "shortterm" ? null : "shortterm")}
-              title="View tasks"
-            >
-              {selectedGoalType === "shortterm" ? "Hide Tasks" : "View Tasks"}
-            </button>
-          </div>
-          <div className="progress-bar-track">
-            <div
-              className="progress-bar-fill shortterm-fill"
-              style={{ width: `${shortTermProgress}%` }}
-            ></div>
-          </div>
-          <p className="progress-percent shortterm-color">{shortTermProgress}%</p>
+                <div className="progress-bar-track">
+                  <div
+                    className={`progress-bar-fill ${cfg.fillClass}`}
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
 
-          {/* Task List for Short-Term */}
-          {selectedGoalType === "shortterm" && (
-            <div className="goal-tasks-list">
-              {shortTermTasks.length > 0 ? (
-                <ul>
-                  {shortTermTasks.map(task => (
-                    <li key={task._id} className={task.isCompleted ? "completed-task" : "pending-task"}>
-                      <span className="task-status-icon">{task.isCompleted ? "✓" : "○"}</span>
-                      <span className="task-name">{task.taskTitle}</span>
-                      {task.goalId && <span className="task-goal">({task.goalId.title})</span>}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="no-tasks">No short-term tasks yet</p>
-              )}
-            </div>
-          )}
-        </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.3rem" }}>
+                  <p className={`progress-percent ${cfg.colorClass}`} style={{ margin: 0 }}>{progress}%</p>
+                  {tasks.length > 0 && (
+                    <button
+                      className="view-tasks-btn"
+                      onClick={() => setSelectedGoalType(isOpen ? null : goal._id)}
+                    >
+                      {isOpen ? "Hide Tasks" : `View Tasks (${tasks.length})`}
+                    </button>
+                  )}
+                </div>
 
-        {/* Mid-Term Progress */}
-        <div className="progress-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <h3>📈 {midTermGoalName}</h3>
-            <button
-              className="view-tasks-btn"
-              onClick={() => setSelectedGoalType(selectedGoalType === "midterm" ? null : "midterm")}
-              title="View tasks"
-            >
-              {selectedGoalType === "midterm" ? "Hide Tasks" : "View Tasks"}
-            </button>
-          </div>
-          <div className="progress-bar-track">
-            <div
-              className="progress-bar-fill midterm-fill"
-              style={{ width: `${midTermProgress}%` }}
-            ></div>
-          </div>
-          <p className="progress-percent midterm-color">{midTermProgress}%</p>
+                {/* Expandable task list */}
+                {isOpen && (
+                  <div className="goal-tasks-list">
+                    <ul>
+                      {tasks.map(task => (
+                        <li key={task._id} className={task.isCompleted ? "completed-task" : "pending-task"}>
+                          <span className="task-status-icon">{task.isCompleted ? "✓" : "○"}</span>
+                          <span className="task-name">{task.taskTitle}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-          {/* Task List for Mid-Term */}
-          {selectedGoalType === "midterm" && (
-            <div className="goal-tasks-list">
-              {midTermTasks.length > 0 ? (
-                <ul>
-                  {midTermTasks.map(task => (
-                    <li key={task._id} className={task.isCompleted ? "completed-task" : "pending-task"}>
-                      <span className="task-status-icon">{task.isCompleted ? "✓" : "○"}</span>
-                      <span className="task-name">{task.taskTitle}</span>
-                      {task.goalId && <span className="task-goal">({task.goalId.title})</span>}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="no-tasks">No mid-term tasks yet</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Long-Term Progress */}
-        <div className="progress-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <h3>🚀 {longTermGoalName}</h3>
-            <button
-              className="view-tasks-btn"
-              onClick={() => setSelectedGoalType(selectedGoalType === "longterm" ? null : "longterm")}
-              title="View tasks"
-            >
-              {selectedGoalType === "longterm" ? "Hide Tasks" : "View Tasks"}
-            </button>
-          </div>
-          <div className="progress-bar-track">
-            <div
-              className="progress-bar-fill longterm-fill"
-              style={{ width: `${longTermProgress}%` }}
-            ></div>
-          </div>
-          <p className="progress-percent longterm-color">{longTermProgress}%</p>
-
-          {/* Task List for Long-Term */}
-          {selectedGoalType === "longterm" && (
-            <div className="goal-tasks-list">
-              {longTermTasks.length > 0 ? (
-                <ul>
-                  {longTermTasks.map(task => (
-                    <li key={task._id} className={task.isCompleted ? "completed-task" : "pending-task"}>
-                      <span className="task-status-icon">{task.isCompleted ? "✓" : "○"}</span>
-                      <span className="task-name">{task.taskTitle}</span>
-                      {task.goalId && <span className="task-goal">({task.goalId.title})</span>}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="no-tasks">No long-term tasks yet</p>
-              )}
-            </div>
-          )}
-        </div>
+                {goal.endDate && (
+                  <p style={{ fontSize: "0.72rem", color: "#64748b", margin: "0.4rem 0 0" }}>
+                    Deadline: {new Date(goal.endDate).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* ===== MyDay: Dual Pie Charts + Hour Logger ===== */}
@@ -560,20 +591,85 @@ function Dashboard() {
             <ul className="dashboard-timetable-list">
               {timetable.subjects.map((sub, index) => {
                 if (!sub) return null;
-                const isDone = !!doneSubjects[sub._id];
+                const subjectTasks = getLectureTasks(sub._id);
+                const pendingSubjectTaskCount = subjectTasks.filter(task => !task.isCompleted).length;
+                const isDone = subjectTasks.length > 0 && subjectTasks.every(task => task.isCompleted);
+                const isAdding = activeSubtaskSubject === sub._id;
+                const isExpanded = !!expandedLectureSubjects[sub._id];
+
                 return (
                   <li key={sub._id || index} className={`dt-item ${isDone ? "dt-item-done" : ""}`}>
-                    <label className="homework-label">
-                      <input
-                        type="checkbox"
-                        checked={isDone}
-                        onChange={() => markSubjectDone(sub._id, sub.subjectName)}
-                      />
-                      <span className={`dt-subject ${isDone ? "dt-subject-done" : ""}`}>
-                        {sub.subjectName}
-                      </span>
-                    </label>
-                    {sub.semester && <span className="dt-sem">{sub.semester}</span>}
+                    <div className="dt-subject-row">
+                      <div className="dt-subject-main">
+                        <span className={`dt-subject ${isDone ? "dt-subject-done" : ""}`}>
+                          {sub.subjectName}
+                        </span>
+                        <span className="dt-pending-count">
+                          {pendingSubjectTaskCount} pending
+                        </span>
+                      </div>
+
+                      <div className="lecture-row-actions">
+                        <button
+                          type="button"
+                          className="lecture-add-btn"
+                          onClick={() => setActiveSubtaskSubject(isAdding ? null : sub._id)}
+                          aria-label={`Add sub-task for ${sub.subjectName}`}
+                          title={`Add sub-task for ${sub.subjectName}`}
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          className={`lecture-dropdown-btn ${isExpanded ? "lecture-dropdown-btn-open" : ""}`}
+                          onClick={() => toggleLectureDropdown(sub._id)}
+                          aria-expanded={isExpanded}
+                          aria-label={`${isExpanded ? "Hide" : "Show"} sub-tasks for ${sub.subjectName}`}
+                          title={`${isExpanded ? "Hide" : "Show"} sub-tasks`}
+                        >
+                          v
+                        </button>
+                      </div>
+                    </div>
+
+                    {isAdding && (
+                      <div className="lecture-subtask-form">
+                        <input
+                          value={newSubtaskTitles[sub._id] || ""}
+                          onChange={(e) => handleNewSubtaskTitleChange(sub._id, e.target.value)}
+                          onKeyDown={(e) => handleSubtaskKeyDown(e, sub)}
+                          placeholder="New sub-task"
+                          autoFocus
+                        />
+                        <button type="button" onClick={() => addLectureSubtask(sub)}>
+                          Add
+                        </button>
+                      </div>
+                    )}
+
+                    {isExpanded && (
+                      subjectTasks.length > 0 ? (
+                        <ul className="lecture-subtask-list">
+                          {subjectTasks.map(task => (
+                            <li
+                              key={task._id}
+                              className={`lecture-subtask-item ${task.isCompleted ? "lecture-subtask-done" : ""}`}
+                            >
+                              <label className="lecture-subtask-label">
+                                <input
+                                  type="checkbox"
+                                  checked={task.isCompleted}
+                                  onChange={() => toggleLectureSubtask(task)}
+                                />
+                                <span>{task.taskTitle}</span>
+                              </label>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="lecture-empty-subtasks">No sub-tasks yet.</p>
+                      )
+                    )}
                   </li>
                 );
               })}
@@ -600,9 +696,14 @@ function Dashboard() {
               ))}
             </ul>
           ) : (
-            <p className="no-schedule-text">All tasks for today completed! 🎉</p>
+            <p className="no-schedule-text">No other pending tasks for today.</p>
           )}
         </div>
+      </div>
+
+      <div className="subject-subtasks-grid">
+        <UncompletedSubTasks tasks={pendingSubjectSubTasks} />
+        <CompletedSubTasks tasks={completedSubjectSubTasks} />
       </div>
     </div>
   );

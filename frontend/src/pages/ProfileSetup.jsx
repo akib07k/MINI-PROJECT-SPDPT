@@ -107,7 +107,8 @@ function ProfileSetup() {
 
         try {
             // Exclude email from update payload
-            const { email, ...updateData } = form;
+            const updateData = { ...form };
+            delete updateData.email;
             const res = await API.put(`/students/${student._id}`, updateData);
 
             // Update localStorage with latest student data

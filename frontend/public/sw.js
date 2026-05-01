@@ -3,7 +3,7 @@
 const CACHE_NAME = 'spdpt-sw-v1';
 
 // Install event
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
     self.skipWaiting();
 });
 
@@ -28,8 +28,6 @@ self.addEventListener('message', (event) => {
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-
-    const action = event.action;
 
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

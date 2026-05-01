@@ -4,6 +4,19 @@
 import { useEffect } from 'react';
 import API from '../services/api';
 
+const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const isLectureSubtask = (task) => task?.taskType === 'lecture-subtask';
+
+const isSubjectTask = (task) => {
+    return !!task?.subjectId || isLectureSubtask(task);
+};
+
 const useTaskReminder = (studentName) => {
     useEffect(() => {
         if (!studentName) return;
@@ -38,7 +51,7 @@ const useTaskReminder = (studentName) => {
 
                 let pendingCount = 0;
                 let backlogCount = 0;
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateString();
 
                 try {
                     const res = await API.get(`/tasks/${student._id}`);
@@ -57,11 +70,14 @@ const useTaskReminder = (studentName) => {
                     };
 
                     pendingCount = allTasks.filter(
-                        t => !t.isCompleted && (!t.date || isTodayDate(t.date))
+                        t => !t.isCompleted && (
+                            (!isSubjectTask(t) && (!t.date || isTodayDate(t.date))) ||
+                            (isLectureSubtask(t) && isTodayDate(t.date))
+                        )
                     ).length;
 
                     backlogCount = allTasks.filter(
-                        t => !t.isCompleted && t.date && isPastDate(t.date)
+                        t => !t.isCompleted && !isSubjectTask(t) && t.date && isPastDate(t.date)
                     ).length;
                 } catch (err) {
                     console.log('Error fetching tasks for reminder:', err);

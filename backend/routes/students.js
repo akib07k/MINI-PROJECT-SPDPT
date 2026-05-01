@@ -53,6 +53,24 @@ router.post("/", async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters long." });
     }
+    if (!/(?=.*[a-zA-Z])/.test(password)) {
+      return res.status(400).json({ message: "Password must contain at least one letter." });
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      return res.status(400).json({ message: "Password must contain at least one number." });
+    }
+    if (!/(?=.*[@$!%*?&_#-])/.test(password)) {
+      return res.status(400).json({ message: "Password must contain at least one special character." });
+    }
+    if (!branch || !branch.trim()) {
+      return res.status(400).json({ message: "Branch is required." });
+    }
+    if (!semester || !semester.trim()) {
+      return res.status(400).json({ message: "Semester is required." });
+    }
+    if (!careerGoal || !careerGoal.trim()) {
+      return res.status(400).json({ message: "Career Goal is required." });
+    }
 
     // check existing user
     const existingStudent = await Student.findOne({ email: email.trim().toLowerCase() });

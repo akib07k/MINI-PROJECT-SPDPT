@@ -1,12 +1,12 @@
 /* ===== Greeting Banner ===== */
 .greeting-banner {
-  background: linear-gradient(135deg, #1e1e2f 0%, #2a1f4e 50%, #1e1e2f 100%);
+  background: #ffffff; /* Removed the dark gradient */
   border-radius: 16px;
   padding: 2rem 2.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(99, 102, 241, 0.05); /* Lighter shadow */
   margin-bottom: 2rem;
   position: relative;
   overflow: hidden;
@@ -52,7 +52,7 @@
 
 .greeting-hello {
   font-size: 0.95rem;
-  color: #94a3b8;
+  color: #64748b;
   margin: 0 0 0.25rem;
   font-weight: 500;
   letter-spacing: 0.3px;
@@ -61,7 +61,7 @@
 .greeting-name {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #f1f5f9;
+  color: #1e293b;
   margin: 0 0 0.75rem;
   letter-spacing: -0.5px;
   line-height: 1.2;
@@ -69,7 +69,7 @@
 
 .greeting-message {
   font-size: 0.95rem;
-  color: #94a3b8;
+  color: #64748b;
   line-height: 1.6;
   margin: 0 0 1.25rem;
 }

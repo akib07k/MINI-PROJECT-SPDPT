@@ -35,6 +35,12 @@ const taskSchema = new mongoose.Schema({
     required: true
   },
 
+  taskType: {
+    type: String,
+    enum: ["general", "daily-study", "lecture-subtask"],
+    default: "general"
+  },
+
   dueDate: Date,
 
   deadline: {

@@ -8,7 +8,7 @@
 .subjects-page h2 {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #1e293b;
     margin: 0 0 1.5rem;
 }
 
@@ -26,10 +26,10 @@
     flex: 1 1 200px;
     padding: 0.7rem 1rem;
     font-size: 0.95rem;
-    border: 1px solid #334155;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    background-color: #0f172a;
-    color: #f1f5f9;
+    background-color: #f8fafc;
+    color: #1e293b;
     outline: none;
     transition: border-color 0.2s;
 }
@@ -44,8 +44,8 @@
 }
 
 .subject-form select option {
-    background-color: #0f172a;
-    color: #f1f5f9;
+    background-color: #f8fafc;
+    color: #1e293b;
 }
 
 .subject-form button {
@@ -84,10 +84,10 @@
     gap: 0.75rem;
     padding: 1rem 1.25rem;
     margin-bottom: 0.75rem;
-    background-color: #1e1e2f;
+    background-color: #ffffff;
     border-radius: 8px;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
-    color: #e2e8f0;
+    color: #334155;
     transition: transform 0.15s, box-shadow 0.15s;
 }
 
@@ -104,12 +104,12 @@
 }
 
 .subject-item strong {
-    color: #f1f5f9;
+    color: #1e293b;
     font-size: 1rem;
 }
 
 .subject-item span {
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.9rem;
 }
 
@@ -133,7 +133,7 @@
 .empty-message {
     text-align: center;
     padding: 2rem 1rem;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 1rem;
 }
 
@@ -141,12 +141,12 @@
 .timetable-section {
     margin-top: 3rem;
     padding-top: 2rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid #e2e8f0;
 }
 
 .timetable-section h2 {
     font-size: 1.5rem;
-    color: #f1f5f9;
+    color: #1e293b;
     margin-bottom: 1.5rem;
 }
 
@@ -158,15 +158,15 @@
     padding: 0.75rem 1rem;
     font-size: 1rem;
     border-radius: 8px;
-    background-color: #0f172a;
-    color: #f1f5f9;
-    border: 1px solid #334155;
+    background-color: #f8fafc;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
     width: 100%;
     max-width: 300px;
 }
 
 .timetable-view {
-    background-color: #1e1e2f;
+    background-color: #ffffff;
     padding: 1.5rem;
     border-radius: 8px;
     margin-bottom: 2rem;
@@ -188,8 +188,8 @@
 
 .timetable-item {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid #334155;
-    color: #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
 }
 
 .timetable-item:last-child {
@@ -197,12 +197,12 @@
 }
 
 .no-schedule {
-    color: #94a3b8;
+    color: #64748b;
     font-style: italic;
 }
 
 .add-timetable-form {
-    background-color: #1e293b;
+    background-color: #e2e8f0;
     padding: 1.5rem;
     border-radius: 8px;
     max-width: 500px;
@@ -211,7 +211,7 @@
 .add-timetable-form h4 {
     margin-top: 0;
     margin-bottom: 1rem;
-    color: #f8fafc;
+    color: #1e293b;
 }
 
 .form-group {
@@ -223,16 +223,16 @@
 
 .form-group label {
     font-size: 0.9rem;
-    color: #cbd5e1;
+    color: #475569;
 }
 
 .form-group select,
 .form-group input {
     padding: 0.75rem;
-    background-color: #0f172a;
-    border: 1px solid #334155;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .form-divider {

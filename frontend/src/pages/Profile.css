@@ -8,7 +8,7 @@
 .profile-page h2 {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #1e293b;
     margin: 0 0 1.5rem;
 }
 
@@ -51,7 +51,7 @@
 
 /* ===== Section Cards ===== */
 .profile-section {
-    background-color: #1e1e2f;
+    background-color: #ffffff;
     border-radius: 10px;
     padding: 1.5rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
@@ -94,7 +94,7 @@
 
 .profile-field label {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 600;
@@ -103,10 +103,10 @@
 .profile-field input,
 .profile-field textarea {
     padding: 0.65rem 0.85rem;
-    background-color: #0f172a;
-    border: 1px solid #334155;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
-    color: #e2e8f0;
+    color: #1e293b;
     font-size: 0.95rem;
     font-family: inherit;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -120,10 +120,10 @@
 }
 
 .profile-field input[readonly] {
-    background-color: #1a1a2e;
-    color: #94a3b8;
+    background-color: #ffffff;
+    color: #64748b;
     cursor: default;
-    border-color: #1e293b;
+    border-color: #e2e8f0;
 }
 
 .profile-field textarea {
@@ -139,11 +139,11 @@
 }
 
 .perf-card {
-    background-color: #0f172a;
+    background-color: #f8fafc;
     border-radius: 8px;
     padding: 1.25rem 1rem;
     text-align: center;
-    border: 1px solid #1e293b;
+    border: 1px solid #e2e8f0;
 }
 
 .perf-value {
@@ -170,7 +170,7 @@
 
 .perf-label {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin: 0;
@@ -186,10 +186,10 @@
 .skills-input-row input {
     flex: 1;
     padding: 0.55rem 0.75rem;
-    background-color: #0f172a;
-    border: 1px solid #334155;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
-    color: #e2e8f0;
+    color: #1e293b;
     font-size: 0.9rem;
     font-family: inherit;
     transition: border-color 0.2s;
@@ -203,7 +203,7 @@
 .skills-input-row button {
     padding: 0.55rem 1rem;
     background-color: #a78bfa;
-    color: #0f172a;
+    color: #f8fafc;
     border: none;
     border-radius: 6px;
     font-size: 0.85rem;
@@ -228,7 +228,7 @@
     align-items: center;
     gap: 0.4rem;
     background-color: rgba(167, 139, 250, 0.12);
-    color: #c4b5fd;
+    color: #7c3aed;
     border: 1px solid rgba(167, 139, 250, 0.25);
     padding: 0.3rem 0.7rem;
     border-radius: 999px;
@@ -291,13 +291,13 @@
 .profile-loading {
     text-align: center;
     padding: 3rem 1rem;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 1.1rem;
 }
 
 /* ===== Profile Setup Page ===== */
 .setup-subtitle {
-    color: #94a3b8;
+    color: #64748b;
     font-size: 1rem;
     margin: -0.75rem 0 1.5rem;
 }
@@ -316,8 +316,8 @@
 .profile-skip-btn {
     padding: 0.75rem 2rem;
     background: transparent;
-    color: #94a3b8;
-    border: 1px solid #334155;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 500;
@@ -326,6 +326,6 @@
 }
 
 .profile-skip-btn:hover {
-    color: #f1f5f9;
+    color: #334155;
     border-color: #64748b;
 }

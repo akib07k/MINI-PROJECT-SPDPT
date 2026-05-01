@@ -8,7 +8,7 @@
 .goals-page h2 {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #1e293b;
     margin: 0 0 1.5rem;
 }
 
@@ -26,10 +26,10 @@
     flex: 1 1 200px;
     padding: 0.7rem 1rem;
     font-size: 0.95rem;
-    border: 1px solid #334155;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    background-color: #0f172a;
-    color: #f1f5f9;
+    background-color: #f8fafc;
+    color: #1e293b;
     outline: none;
     transition: border-color 0.2s;
 }
@@ -44,8 +44,8 @@
 }
 
 .goal-form select option {
-    background-color: #0f172a;
-    color: #f1f5f9;
+    background-color: #f8fafc;
+    color: #1e293b;
 }
 
 /* Deadline Date Input */
@@ -93,10 +93,10 @@
     gap: 0.75rem;
     padding: 1rem 1.25rem;
     margin-bottom: 0.75rem;
-    background-color: #1e1e2f;
+    background-color: #ffffff;
     border-radius: 8px;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
-    color: #e2e8f0;
+    color: #334155;
     transition: transform 0.15s, box-shadow 0.15s;
 }
 
@@ -123,12 +123,12 @@
 }
 
 .goal-item strong {
-    color: #f1f5f9;
+    color: #1e293b;
     font-size: 1rem;
 }
 
 .goal-item span {
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.9rem;
 }
 
@@ -184,7 +184,7 @@
 }
 
 .cancel-btn:hover {
-    background-color: #475569;
+    background-color: #94a3b8;
 }
 
 .goal-edit-form {
@@ -212,10 +212,10 @@
 .goal-edit-form select {
     padding: 0.5rem 0.75rem;
     font-size: 0.9rem;
-    border: 1px solid #334155;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
-    background-color: #0f172a;
-    color: #f1f5f9;
+    background-color: #f8fafc;
+    color: #1e293b;
     outline: none;
     flex: 1;
     min-width: 120px;
@@ -229,7 +229,7 @@
 .empty-message {
     text-align: center;
     padding: 2rem 1rem;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 1rem;
 }
 
@@ -254,8 +254,8 @@
 .ap-form {
     margin-top: 0.75rem;
     padding: 1rem;
-    background-color: #0f172a;
-    border: 1px solid #334155;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
 }
 
@@ -277,10 +277,10 @@
     flex: 1;
     padding: 0.5rem 0.75rem;
     font-size: 0.9rem;
-    border: 1px solid #334155;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
-    background-color: #1e293b;
-    color: #f1f5f9;
+    background-color: #e2e8f0;
+    color: #1e293b;
     outline: none;
     transition: border-color 0.2s;
 }
@@ -321,7 +321,7 @@
 }
 
 .ap-add-step-btn {
-    background-color: #1e293b;
+    background-color: #e2e8f0;
     color: #a78bfa;
     border: 1px solid #a78bfa;
     padding: 0.4rem 0.8rem;
@@ -341,8 +341,8 @@
 .ap-display {
     margin-top: 0.75rem;
     padding: 0.85rem 1rem;
-    background-color: #0f172a;
-    border: 1px solid #334155;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
 }
 
@@ -376,7 +376,7 @@
 .ap-step-item {
     padding: 0.4rem 0.6rem;
     border-radius: 6px;
-    background-color: #1e293b;
+    background-color: #e2e8f0;
     transition: background-color 0.2s;
 }
 
@@ -403,7 +403,7 @@
 
 .ap-step-title {
     font-size: 0.9rem;
-    color: #e2e8f0;
+    color: #334155;
     flex: 1;
 }
 
@@ -421,6 +421,6 @@
 
 .loading-text {
     text-align: center;
-    color: #94a3b8;
+    color: #64748b;
     padding: 2rem;
 }

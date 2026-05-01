@@ -159,10 +159,18 @@ function MyDay({ onSave }) {
             const copy = [...prev];
             copy[index] = { ...copy[index], [field]: value };
 
-            // Validate this row inline after update
-            const newErrors = [...rowErrors];
-            newErrors[index] = validateRow(copy[index]);
-            setRowErrors(newErrors);
+            // Only validate inline when changing hours/note, NOT when typing the name
+            // (avoids showing "Hours are required" while user is still filling the name)
+            if (field !== "name") {
+                const newErrors = [...rowErrors];
+                newErrors[index] = validateRow(copy[index]);
+                setRowErrors(newErrors);
+            } else {
+                // Clear any existing error for this row while user is typing the name
+                const newErrors = [...rowErrors];
+                newErrors[index] = "";
+                setRowErrors(newErrors);
+            }
 
             return copy;
         });

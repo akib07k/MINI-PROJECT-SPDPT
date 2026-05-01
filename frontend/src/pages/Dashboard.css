@@ -8,51 +8,21 @@
 .dashboard-page h2 {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #1e293b;
     margin: 0 0 1.5rem;
 }
 
-/* ===== Stat Cards ===== */
-.dashboard-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.25rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background-color: #1e1e2f;
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-    text-align: center;
-}
-
-.stat-card .stat-label {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 0 0 0.5rem;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #a78bfa;
-    margin: 0;
-}
-
-/* ===== Progress Grid (Academic / Skill on row 1, Short/Mid/Long-term on row 2) ===== */
+/* ===== Progress Grid — all cards uniform size ===== */
 .progress-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1.25rem;
     margin-bottom: 2rem;
+    align-items: start; /* prevents cards from stretching when a sibling expands */
 }
 
 .progress-card {
-    background-color: #1e1e2f;
+    background-color: #ffffff;
     border-radius: 10px;
     padding: 1.5rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
@@ -61,20 +31,7 @@
 .progress-card h3 {
     margin: 0 0 1rem;
     font-size: 1.05rem;
-    color: #f1f5f9;
-}
-
-/* Academic and Skill cards span 3 columns each (row 1) */
-.progress-card:nth-child(1),
-.progress-card:nth-child(2) {
-    grid-column: span 3;
-}
-
-/* Short, Mid, Long-term cards span 2 columns each (row 2) */
-.progress-card:nth-child(3),
-.progress-card:nth-child(4),
-.progress-card:nth-child(5) {
-    grid-column: span 2;
+    color: #1e293b;
 }
 
 /* PDP card spans full width */
@@ -85,7 +42,7 @@
 .progress-bar-track {
     width: 100%;
     height: 14px;
-    background-color: #334155;
+    background-color: #e2e8f0;
     border-radius: 999px;
     overflow: hidden;
 }
@@ -189,7 +146,7 @@
 .goal-tasks-list {
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid #e2e8f0;
     max-height: 300px;
     overflow-y: auto;
 }
@@ -206,14 +163,14 @@
     gap: 0.5rem;
     padding: 0.6rem 0.75rem;
     margin-bottom: 0.5rem;
-    background-color: #0f172a;
+    background-color: #f8fafc;
     border-radius: 6px;
     font-size: 0.9rem;
     transition: background-color 0.2s ease;
 }
 
 .goal-tasks-list li:hover {
-    background-color: #1e293b;
+    background-color: #e2e8f0;
 }
 
 .goal-tasks-list .completed-task {
@@ -241,12 +198,12 @@
 
 .goal-tasks-list .task-name {
     flex: 1;
-    color: #e2e8f0;
+    color: #334155;
 }
 
 .goal-tasks-list .completed-task .task-name {
     text-decoration: line-through;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .goal-tasks-list .task-goal {
@@ -267,29 +224,11 @@
     .progress-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-
-    /* All cards span full width on tablets */
-    .progress-card:nth-child(1),
-    .progress-card:nth-child(2),
-    .progress-card:nth-child(3),
-    .progress-card:nth-child(4),
-    .progress-card:nth-child(5) {
-        grid-column: span 1;
-    }
 }
 
 @media (max-width: 768px) {
     .progress-grid {
         grid-template-columns: 1fr;
-    }
-
-    /* All cards span full width on mobile */
-    .progress-card:nth-child(1),
-    .progress-card:nth-child(2),
-    .progress-card:nth-child(3),
-    .progress-card:nth-child(4),
-    .progress-card:nth-child(5) {
-        grid-column: span 1;
     }
 }
 
@@ -297,13 +236,13 @@
 .loading-text {
     text-align: center;
     padding: 3rem 1rem;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 1.1rem;
 }
 
 /* ===== Pie Chart Section ===== */
 .pie-chart-section {
-    background-color: #1e1e2f;
+    background-color: #ffffff;
     border-radius: 10px;
     padding: 1.5rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
@@ -313,7 +252,7 @@
 .pie-chart-section h3 {
     margin: 0 0 1rem;
     font-size: 1.1rem;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .pie-chart-wrapper {
@@ -342,7 +281,7 @@
 
 /* ===== Timetable Section ===== */
 .dashboard-timetable-section {
-    background-color: #1e1e2f;
+    background-color: #ffffff;
     border-radius: 10px;
     padding: 1.5rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
@@ -352,7 +291,7 @@
 .dashboard-timetable-section h3 {
     margin: 0 0 1rem;
     font-size: 1.1rem;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .dashboard-timetable-list {
@@ -363,11 +302,173 @@
 
 .dt-item {
     display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+}
+
+.dt-subject-row {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.85rem 0;
-    border-bottom: 1px solid #334155;
-    color: #e2e8f0;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.dt-subject-main {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.lecture-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+
+.lecture-add-btn,
+.lecture-dropdown-btn {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid #a78bfa;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #7c3aed;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
+}
+
+.lecture-dropdown-btn {
+    color: #475569;
+    font-size: 0.95rem;
+}
+
+.lecture-add-btn:hover,
+.lecture-dropdown-btn:hover {
+    background-color: rgba(167, 139, 250, 0.12);
+    color: #6d28d9;
+    transform: translateY(-1px);
+}
+
+.lecture-add-btn:active,
+.lecture-dropdown-btn:active {
+    transform: translateY(0);
+}
+
+.lecture-dropdown-btn-open {
+    background-color: rgba(167, 139, 250, 0.12);
+    color: #6d28d9;
+    transform: rotate(180deg);
+}
+
+.lecture-dropdown-btn-open:hover {
+    transform: rotate(180deg) translateY(1px);
+}
+
+.lecture-subtask-form {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.lecture-subtask-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background-color: #f8fafc;
+    color: #1e293b;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.lecture-subtask-form input:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.16);
+}
+
+.lecture-subtask-form button {
+    padding: 0.55rem 0.85rem;
+    border: none;
+    border-radius: 6px;
+    background-color: #7c3aed;
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.lecture-subtask-form button:hover {
+    background-color: #6d28d9;
+}
+
+.lecture-subtask-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.1rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.lecture-subtask-item {
+    padding: 0.55rem 0.65rem;
+    border-radius: 6px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.lecture-subtask-done {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.25);
+}
+
+.lecture-subtask-label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #334155;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.lecture-subtask-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    accent-color: #7c3aed;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.lecture-subtask-done .lecture-subtask-label span {
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+.lecture-empty-subtasks {
+    margin: 0.1rem 0 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-style: italic;
 }
 
 .homework-label {
@@ -375,12 +476,12 @@
     align-items: center;
     cursor: pointer;
     font-size: 0.9rem;
-    color: #cbd5e1;
+    color: #475569;
     transition: color 0.2s ease;
 }
 
 .homework-label:hover {
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .homework-label input[type="checkbox"] {
@@ -388,8 +489,8 @@
     -webkit-appearance: none;
     width: 1.1rem;
     height: 1.1rem;
-    background-color: #334155;
-    border: 1px solid #475569;
+    background-color: #e2e8f0;
+    border: 1px solid #94a3b8;
     border-radius: 4px;
     margin-right: 0.75rem;
     cursor: pointer;
@@ -438,14 +539,26 @@
 
 .dt-subject {
     font-weight: 500;
+    overflow-wrap: anywhere;
 }
 
 .dt-sem {
     font-size: 0.85rem;
-    color: #94a3b8;
-    background-color: #0f172a;
+    color: #64748b;
+    background-color: #f8fafc;
     padding: 0.2rem 0.6rem;
     border-radius: 4px;
+}
+
+.dt-pending-count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #d97706;
+    background-color: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
 }
 
 .no-schedule-text {
@@ -457,7 +570,7 @@
 
 /* ===== Pending Tasks Section ===== */
 .dashboard-pending-section {
-    background-color: #1e1e2f;
+    background-color: #ffffff;
     border-radius: 10px;
     padding: 1.5rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
@@ -467,7 +580,7 @@
 .dashboard-pending-section h3 {
     margin: 0 0 1rem;
     font-size: 1.1rem;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .pending-task-list {
@@ -483,8 +596,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.7rem 0;
-    border-bottom: 1px solid #334155;
-    color: #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
 }
 
 .pending-task-item:last-child {

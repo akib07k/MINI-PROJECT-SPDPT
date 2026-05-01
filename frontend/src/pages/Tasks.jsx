@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import "./Tasks.css";
 
+const isSubjectTask = (task) => {
+    return !!task?.subjectId || task?.taskType === "lecture-subtask";
+};
+
 function Tasks() {
     const [tasks, setTasks] = useState([]);
     const [taskTitle, setTaskTitle] = useState("");
@@ -22,7 +26,8 @@ function Tasks() {
             API.get(`/goals/${student._id}`)
         ])
             .then(([tasksRes, goalsRes]) => {
-                setTasks(tasksRes.data.tasks);
+                const generalTasks = (tasksRes.data.tasks || []).filter(task => !isSubjectTask(task));
+                setTasks(generalTasks);
                 setGoals(goalsRes.data.goals);
                 setLoading(false);
             })
@@ -191,7 +196,7 @@ function Tasks() {
 
             {/* Tasks List */}
             {tasks.length === 0 ? (
-                <p className="empty-message">No tasks found. Add your first task above.</p>
+                <p className="empty-message">No general tasks found. Subject sub-tasks are managed on the dashboard.</p>
             ) : (
                 <ul className="task-list">
                     {tasks.map((task) => (

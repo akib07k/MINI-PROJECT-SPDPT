@@ -34,7 +34,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 0;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f8fafc;
 }
 
 .history-task-item:last-child {
@@ -49,7 +49,7 @@
 
 .task-title {
     font-weight: 500;
-    color: #334155;
+    color: #1e293b;
 }
 
 .task-date {
@@ -58,7 +58,7 @@
 }
 
 .task-goal-badge {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
     color: #64748b;
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
@@ -72,5 +72,5 @@
 
 .completed-item .task-title {
     text-decoration: line-through;
-    color: #94a3b8;
+    color: #64748b;
 }

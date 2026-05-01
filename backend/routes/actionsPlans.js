@@ -4,6 +4,12 @@ const ActionPlan = require("../models/ActionPlan");
 const Task = require("../models/Task");
 const Progress = require("../models/Progress");
 
+const getGoalTaskFilter = (goalId) => ({
+  goalId,
+  subjectId: null,
+  taskType: { $ne: "lecture-subtask" }
+});
+
 // CREATE ACTION PLAN
 // POST /api/actionPlans
 // → Creates plan AND immediately creates a Task for every step
@@ -40,8 +46,9 @@ router.post("/", async (req, res) => {
     await actionPlan.save(); // save with taskIds populated
 
     // 3. Update progress (new tasks added = denominator increases)
-    const totalTasks = await Task.countDocuments({ goalId });
-    const completedTasks = await Task.countDocuments({ goalId, isCompleted: true });
+    const goalTaskFilter = getGoalTaskFilter(goalId);
+    const totalTasks = await Task.countDocuments(goalTaskFilter);
+    const completedTasks = await Task.countDocuments({ ...goalTaskFilter, isCompleted: true });
     const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     await Progress.findOneAndUpdate(
       { studentId, goalId },
@@ -90,8 +97,9 @@ router.patch("/:planId/step/:stepId", async (req, res) => {
       await Task.findByIdAndUpdate(step.taskId, { isCompleted: isDone });
 
       // Recalculate progress
-      const totalTasks = await Task.countDocuments({ goalId: plan.goalId });
-      const completedTasks = await Task.countDocuments({ goalId: plan.goalId, isCompleted: true });
+      const goalTaskFilter = getGoalTaskFilter(plan.goalId);
+      const totalTasks = await Task.countDocuments(goalTaskFilter);
+      const completedTasks = await Task.countDocuments({ ...goalTaskFilter, isCompleted: true });
       const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
       await Progress.findOneAndUpdate(
         { studentId: plan.studentId, goalId: plan.goalId },
@@ -124,6 +132,16 @@ router.delete("/:id", async (req, res) => {
 
     // Also delete all tasks created by this plan
     await Task.deleteMany({ actionPlanId: id });
+
+    const goalTaskFilter = getGoalTaskFilter(deleted.goalId);
+    const totalTasks = await Task.countDocuments(goalTaskFilter);
+    const completedTasks = await Task.countDocuments({ ...goalTaskFilter, isCompleted: true });
+    const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    await Progress.findOneAndUpdate(
+      { studentId: deleted.studentId, goalId: deleted.goalId },
+      { percentage, updatedAt: Date.now() },
+      { upsert: true, new: true }
+    );
 
     res.status(200).json({ message: "Action plan deleted successfully." });
 

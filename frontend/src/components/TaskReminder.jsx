@@ -1,21 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import API from '../services/api';
+import React, { useState } from 'react';
 import './TaskReminder.css';
 
+const shouldShowReminderBanner = () => {
+  const hour = new Date().getHours();
+  const lastDismissed = localStorage.getItem('reminderBannerDismissed');
+  const todayDate = new Date().toDateString();
+
+  return hour >= 6 && hour < 11 && lastDismissed !== todayDate;
+};
+
 const TaskReminder = ({ studentName, pendingCount, backlogCount }) => {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(shouldShowReminderBanner);
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    // Show in-page banner in the morning (6 AM – 11 AM) once per day
-    const hour = new Date().getHours();
-    const lastDismissed = localStorage.getItem('reminderBannerDismissed');
-    const todayDate = new Date().toDateString();
-
-    if (hour >= 6 && hour < 11 && lastDismissed !== todayDate) {
-      setVisible(true);
-    }
-  }, []);
 
   const handleDismiss = () => {
     setVisible(false);
@@ -30,11 +26,11 @@ const TaskReminder = ({ studentName, pendingCount, backlogCount }) => {
 
   return (
     <div className="task-reminder-banner">
-      <div className="reminder-icon">🌅</div>
+      <div className="reminder-icon">AM</div>
       <div className="reminder-content">
         <h4>Good Morning, {name}!</h4>
         {total === 0 ? (
-          <p>You're all caught up! Have a productive day 🎉</p>
+          <p>You're all caught up! Have a productive day.</p>
         ) : (
           <p>
             You have{' '}
@@ -45,12 +41,12 @@ const TaskReminder = ({ studentName, pendingCount, backlogCount }) => {
             {backlogCount > 0 && (
               <strong>{backlogCount} pending backlog item{backlogCount > 1 ? 's' : ''}</strong>
             )}
-            . Let's get started! 💪
+            . Let's get started!
           </p>
         )}
       </div>
       <button className="reminder-close-btn" onClick={handleDismiss} title="Dismiss">
-        ✕
+        x
       </button>
     </div>
   );

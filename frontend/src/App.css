@@ -6,3 +6,33 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+/* ===== App Layout Container ===== */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f4f6f9; /* Soft background color from the image reference */
+}
+
+/* Sidebar structure */
+.app-layout.with-sidebar .main-content {
+  flex: 1;
+  margin-left: 240px; /* Width of the sidebar */
+  padding: 2rem;
+  box-sizing: border-box;
+  width: calc(100% - 240px); /* Prevents overflow */
+}
+
+.main-content {
+  width: 100%;
+}
+
+/* Mobile responsive padding constraints */
+@media (max-width: 768px) {
+  .app-layout.with-sidebar .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 1rem;
+    padding-top: 5rem; /* Make room for top navbar on mobile */
+  }
+}

@@ -19,6 +19,19 @@ function Goals() {
 
     const student = JSON.parse(localStorage.getItem("student"));
 
+    // --- Fetch ActionPlan for a given goalId ---
+    const fetchActionPlan = async (goalId) => {
+        try {
+            const res = await API.get(`/actionPlans/goal/${goalId}`);
+            const plans = res.data.actionPlans;
+            if (plans && plans.length > 0) {
+                setActionPlans(prev => ({ ...prev, [goalId]: plans[0] }));
+            }
+        } catch (err) {
+            console.log("ActionPlan fetch error:", err);
+        }
+    };
+
     useEffect(() => {
         if (!student) return;
 
@@ -36,19 +49,6 @@ function Goals() {
                 setLoading(false);
             });
     }, []);
-
-    // --- Fetch ActionPlan for a given goalId ---
-    const fetchActionPlan = async (goalId) => {
-        try {
-            const res = await API.get(`/actionPlans/goal/${goalId}`);
-            const plans = res.data.actionPlans;
-            if (plans && plans.length > 0) {
-                setActionPlans(prev => ({ ...prev, [goalId]: plans[0] }));
-            }
-        } catch (err) {
-            console.log("ActionPlan fetch error:", err);
-        }
-    };
 
     // --- Goal CRUD ---
     const handleAddGoal = async (e) => {

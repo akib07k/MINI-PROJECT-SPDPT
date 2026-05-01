@@ -2,6 +2,7 @@ import { useState } from "react";
 import API from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import "./Register.css";
+import heroImage from "../assets/Men Vectors - Download Free High-Quality Vectors from Freepik _ Freepik.jpg";
 
 function Register() {
     const [name, setName] = useState("");
@@ -48,6 +49,30 @@ function Register() {
             alert("Password must be at least 6 characters long.");
             return;
         }
+        if (!/(?=.*[a-zA-Z])/.test(password)) {
+            alert("Password must contain at least one letter.");
+            return;
+        }
+        if (!/(?=.*\d)/.test(password)) {
+            alert("Password must contain at least one number.");
+            return;
+        }
+        if (!/(?=.*[@$!%*?&_#-])/.test(password)) {
+            alert("Password must contain at least one special character.");
+            return;
+        }
+        if (!branch.trim()) {
+            alert("Branch is required.");
+            return;
+        }
+        if (!semester.trim()) {
+            alert("Semester is required.");
+            return;
+        }
+        if (!careerGoal.trim()) {
+            alert("Career Goal is required.");
+            return;
+        }
 
         try {
             const res = await API.post("/students", {
@@ -68,53 +93,95 @@ function Register() {
     };
 
     return (
-        <div className="register-wrapper">
-            <div className="register-card">
-                <h2>Student Registration</h2>
+        <div className="register-shell">
+            <section className="register-panel register-panel-left">
+                <div className="register-content">
+                    <div className="register-topbar">
+                        <div className="register-brand">
+                            <div className="register-brand-icon" aria-hidden="true">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <p>
+                                STUDENT <span>PERSONAL DEV</span> &amp; PROGRESS TRACKER
+                            </p>
+                        </div>
 
-                <form className="register-form" onSubmit={handleSubmit}>
-                    <input
-                        placeholder="Full Name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                    />
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                    <input
-                        placeholder="Branch"
-                        value={branch}
-                        onChange={(e) => setBranch(e.target.value)}
-                    />
-                    <input
-                        placeholder="Semester"
-                        value={semester}
-                        onChange={(e) => setSemester(e.target.value)}
-                    />
-                    <input
-                        placeholder="Career Goal"
-                        value={careerGoal}
-                        onChange={(e) => setCareerGoal(e.target.value)}
-                    />
-                    <button type="submit">Register</button>
-                </form>
+                        <Link to="/" className="register-login-pill">
+                            Login
+                        </Link>
+                    </div>
 
-                <div className="register-footer">
-                    Already have an account? <Link to="/">Login here</Link>
+                    <div className="register-copy">
+                        <h1>Register</h1>
+                        <p>
+                            Create your account to track performance, stay organized, and grow with SPDPT.
+                        </p>
+                    </div>
+
+                    <form className="register-form" onSubmit={handleSubmit}>
+                        <input
+                            placeholder="Type your full name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="email"
+                            placeholder="Type your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="password"
+                            placeholder="Type your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                        <input
+                            placeholder="Type your branch"
+                            value={branch}
+                            onChange={(e) => setBranch(e.target.value)}
+                            required
+                        />
+                        <input
+                            placeholder="Type your semester"
+                            value={semester}
+                            onChange={(e) => setSemester(e.target.value)}
+                            required
+                        />
+                        <input
+                            placeholder="Type your career goal"
+                            value={careerGoal}
+                            onChange={(e) => setCareerGoal(e.target.value)}
+                            required
+                        />
+                        <button type="submit">Create Account</button>
+                    </form>
+
+                    <div className="register-footer">
+                        Already have an account? <Link to="/">Login here</Link>
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            <aside className="register-panel register-panel-right">
+                <div className="register-illustration-wrap">
+                    <img src={heroImage} alt="Student productivity illustration" className="register-illustration" />
+                </div>
+
+                <div className="register-highlight">
+                    <span className="register-highlight-line"></span>
+                    <h2>Build your progress space</h2>
+                    <p>
+                        Set up your student profile, define goals, and start managing your academic journey in one place.
+                    </p>
+                </div>
+            </aside>
         </div>
     );
 }
