@@ -19,6 +19,7 @@ const Footer = () => {
               <a href="#" className="social-icon">In</a>
               <a href="#" className="social-icon">G</a>
             </div>
+            <p>Akib Khan</p>
           </div>
 
           {/* Quick Links */}
